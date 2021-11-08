@@ -1,5 +1,7 @@
 """
 Generate Figure 3 based on the pre-run results.
+
+@author: Yujia Deng
 """
 
 import numpy as np

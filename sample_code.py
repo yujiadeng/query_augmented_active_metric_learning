@@ -1,5 +1,5 @@
 """
-This file contains sample use of the proposed active clustering method with metric learning.
+This file contains sample use of the proposed active clustering method with metric learning
 
 @author: Yujia Deng
 """
