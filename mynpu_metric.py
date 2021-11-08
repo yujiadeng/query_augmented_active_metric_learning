@@ -1,13 +1,35 @@
+"""
+Main class of the proposed active clustering tool
+
+TODO: change the class name
+
+@author: Yujia Deng
+"""
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from active_semi_clustering.active.pairwise_constraints.example_oracle import MaximumQueriesExceeded
 from active_semi_clustering.exceptions import EmptyClustersException
-# from sklearn.cluster import KMeans
-# from active_semi_clustering.active.pairwise_constraints import min_max
 import heapq
 import time
 class NPU:
     def __init__(self, clusterer=None, impute_method='default', weighted=False, uncertainty='random_forest', initial='default', penalized=False, lambd=0, gamma=0, num_p=0, n_tree=50, diag=True, true_H=False, **kwargs):
+        """
+        MEE method to query
+
+        clusterer: char, method to do semi-supervised clustering, default is PCKmeans
+        impute_method: char, methods to do query augmentation
+        weighted: bool, whether to do weighted penalization
+        uncertainty: char, method to estimate the similarity of the data pairs
+        initial: char, method to initialize the cluster label, default is random
+        penalized: bool, whether to penalize the metric matrx when budget is exhausted
+        lambd: float, unnormalized MDSP penalty weight
+        gamma: float, unnormalized selective penalty weight
+        num_p: int, number of features to penalize
+        n_tree: int, number of trees in the random forest
+        diag: bool, whether to train diagonal metric matrix
+        true_H: bool, whether to use the true H (for test purpose)
+        """
         self.penalized = penalized
         self.diag = diag
         self.true_H = true_H
@@ -51,7 +73,6 @@ class NPU:
         self.hist_p_idx[len(ml)+ len(cl)] = p_idx
         # use number of true constraints to represent the uncertainty of the inferred pair
         n, p = X.shape
-        # uncertainty_weight = (len(ml) + len(cl)) / (n*(n-1) / 2)
         uncertainty_weight = 1
         while True:
             try:
@@ -65,7 +86,6 @@ class NPU:
         self.true_label = true_label
         
     def fit(self, X, oracle=None, request_nc=None):
-        # request_nc_idx = 0 # index recorded for request number of constraints
         n, p = X.shape
         ml, cl = [], []
         neighborhoods = []
@@ -107,8 +127,6 @@ class NPU:
                             
                 while True:
                     try:
-                        
-                        # uncertainty_weight = (len(ml) + len(cl)) / (n*(n-1) / 2)
                         uncertainty_weight = 1
                         if self.lambd == 0 and self.gamma == 0:
                             self.clusterer.fit(X, ml=ml, cl=cl) # for MPCKmeans
@@ -134,29 +152,20 @@ class NPU:
                     tmp =  sorted(list(enumerate(a)), key=lambda x: x[1])
                     tmp2 = [ (tup[0], i) for i, tup in enumerate(tmp)]
                     a_rank = [r for (_, r) in sorted(tmp2)]
-                    # print(a_rank)
                     self.sequential_sum += a_rank
-                
-                # print('self.fit_count=%d \n' % self.fit_count)
-                        
-                        
+                      
                 added_constraints = []
                 x_i, p_i = self._most_informative(X, self.clusterer, neighborhoods)
                 t3 = time.time()
                 print("query cost: %2.3f" % (t3-t1))
                 sorted_neighborhoods = list(zip(*reversed(sorted(zip(p_i, neighborhoods)))))[1]
-                # print(x_i, neighborhoods, p_i, sorted_neighborhoods)
-                # print(len(sorted_neighborhoods))
                 must_link_found = False
                 t2 = time.time()
                 print("Time cost for a single loop: %2.3f" % (t2-t0))
                 for neighborhood in sorted_neighborhoods:
 
                     must_linked = oracle.query(x_i, neighborhood[0])
-                     
-                    # print(oracle.queries_cnt)
                     if must_linked:
-                        # TODO is it necessary? this preprocessing is part of the clustering algorithms
                         for x_j in neighborhood:
                             ml.append([x_i, x_j])
 
@@ -174,7 +183,6 @@ class NPU:
                         if self.penalized:
                             if oracle.queries_cnt in request_nc and oracle.queries_cnt not in self.hist_labels_penalize.keys():
                                 print('extra penalized fitting at nc=%d' % oracle.queries_cnt)
-                                # uncertainty_weight = (len(ml) + len(cl)) / (n*(n-1) / 2)
                                 self.penalized_fit(X, ml, cl)
                                 self.hist_labels_penalize[oracle.queries_cnt] = self.clusterer.labels_  
                                 if not (self.lambd == 0 and self.gamma == 0):
@@ -182,12 +190,9 @@ class NPU:
                                     
 
                         if oracle.queries_cnt in request_nc and oracle.queries_cnt not in self.hist_labels.keys():
-                        # nc = request_nc[request_nc_idx] # output of number of constraints required by the user
-                        # if oracle.queries_cnt == nc:
                             print('extra fitting at nc=%d' % oracle.queries_cnt)
                             while True:
                                 try:
-                                    # uncertainty_weight = (len(ml) + len(cl)) / (n*(n-1) / 2)
                                     if self.lambd == 0 and self.gamma == 0:
                                         self.clusterer.fit(X, ml=ml, cl=cl) # for MPCKmeans
                                         if hasattr(self.clusterer, 'A'):
@@ -201,10 +206,6 @@ class NPU:
                                 except EmptyClustersException:
                                     print('Empty cluster')
                             self.hist_labels[oracle.queries_cnt] = self.clusterer.labels_
-                                # request_nc_idx += 1
-                    
-
-                        # TODO should we add the cannot-link in case the algorithm stops before it queries all neighborhoods?
 
                 if not must_link_found:
                     for neighborhood in neighborhoods:
@@ -213,7 +214,6 @@ class NPU:
                             added_constraints.append([x_i, x_j])
                     neighborhoods.append([x_i])
                 if len(added_constraints):
-                    # print('number of added constraints: %d' % len(added_constraints))
                     self.sequential_constraints.append(added_constraints)
                 print("nc=%d" % oracle.queries_cnt)
                 self.hist_nc += [oracle.queries_cnt]
@@ -231,7 +231,6 @@ class NPU:
             return - (p * np.log2( max(p, 1e-4) ) + (1 - p) * np.log2( max(1 - p, 1e-4) ))
         def _entropy_change(p, i):
             """
-
             Parameters
             ----------
             p : n x K matrix, p[i, k] is the probability of X_i belongs to neighborhood k
@@ -275,18 +274,14 @@ class NPU:
         if self.uncertainty == 'random_forest':
             # Try using the random cluster assignment to see if the clustering result matters here
             n_estimators = self.n_tree
-            # print('n_est:%d' % n_estimators)
             rf = RandomForestClassifier(n_estimators=n_estimators)
             
             t0 = time.time()
             if self.impute_method == 'default':
-                # print('default label')
                 rf.fit(X, clusterer.labels_)
             elif self.impute_method == 'true':
-                # print('true label')
                 rf.fit(X, self.true_label)
             elif self.impute_method == 'random':
-                # print('random label')
                 rf.fit(X, np.random.choice(K, n))
             t1 = time.time()
             print('fitting rf costs: %2.3f seconds' % (t1-t0))
@@ -321,12 +316,6 @@ class NPU:
                     distance_weight[x_i, ] = distance_weight[x_i, ] / (distance_weight[x_i, ].sum() + 1e-6)
     
                     if not np.any(p[x_i,] == 1):
-                    #     # positive_p_i = p[x_i, p[x_i,] > 0]
-                    #     if self.weighted:
-                    #         p[x_i, :] = p[x_i, :] * distance_weight[x_i]
-                    #         positive_p_i = p[x_i, p[x_i,] > 0]
-                    #     else:
-                    #         positive_p_i = p[x_i, p[x_i,] > 0]
                         positive_p_i = p[x_i, p[x_i,] > 0]
                         if not self.weighted:
                             uncertainties[x_i] = -(positive_p_i * np.log2(positive_p_i) ).sum() # weighted by the distance
@@ -404,16 +393,6 @@ def ARI_semi_active(X, y, K, nc, semi, active):
     clusterer.fit(X, ml=pairwise_constraints[0], cl=pairwise_constraints[1])
     return adjusted_rand_score(y, clusterer.labels_)    
 
-# from helper import load_data
-# from active_semi_clustering.active.pairwise_constraints import ExampleOracle 
-# from active_semi_clustering.semi_supervised.pairwise_constraints import PCKMeans, MPCKMeans, MPCKMeansMF, COPKMeans
-# from sklearn.metrics import adjusted_rand_score
-
-# if __name__ == '__main__':
-#     X, y = load_data('breast_cancer')
-#     ARI_semi_active(X, y, len(np.unique(y)), 60, 'pckmeans', 'npu')
-
-
 def _most_informative(self, X, clusterer, neighborhoods):
         n = X.shape[0]
         l = len(neighborhoods)
@@ -475,6 +454,22 @@ def _most_informative(self, X, clusterer, neighborhoods):
 
 class NPU_old:
     def __init__(self, clusterer=None, impute_method='default', weighted=False, uncertainty='random_forest', initial='default', penalized=False, lambd=0, gamma=0, num_p=0, n_tree=50, diag=True, true_H=False, **kwargs):
+        """
+        NPU method to query (Xiong, 2014)
+
+        clusterer: char, method to do semi-supervised clustering, default is PCKmeans
+        impute_method: char, methods to do query augmentation
+        weighted: bool, whether to do weighted penalization
+        uncertainty: char, method to estimate the similarity of the data pairs
+        initial: char, method to initialize the cluster label, default is random
+        penalized: bool, whether to penalize the metric matrx when budget is exhausted
+        lambd: float, unnormalized MDSP penalty weight
+        gamma: float, unnormalized selective penalty weight
+        num_p: int, number of features to penalize
+        n_tree: int, number of trees in the random forest
+        diag: bool, whether to train diagonal metric matrix
+        true_H: bool, whether to use the true H (for test purpose)
+        """
         self.penalized = penalized
         self.diag = diag
         self.true_H = true_H
@@ -527,7 +522,6 @@ class NPU_old:
         self.true_label = true_label
         
     def fit(self, X, oracle=None, request_nc=None):
-        # request_nc_idx = 0 # index recorded for request number of constraints
         n, p = X.shape
         ml, cl = [], []
         neighborhoods = []
@@ -596,18 +590,12 @@ class NPU_old:
                     tmp =  sorted(list(enumerate(a)), key=lambda x: x[1])
                     tmp2 = [ (tup[0], i) for i, tup in enumerate(tmp)]
                     a_rank = [r for (_, r) in sorted(tmp2)]
-                    # print(a_rank)
                     self.sequential_sum += a_rank
-                
-                # print('self.fit_count=%d \n' % self.fit_count)
-                        
-                        
+                      
                 added_constraints = []
                 x_i, p_i = self._most_informative(X, self.clusterer, neighborhoods)
 
                 sorted_neighborhoods = list(zip(*reversed(sorted(zip(p_i, neighborhoods)))))[1]
-                # print(x_i, neighborhoods, p_i, sorted_neighborhoods)
-                # print(len(sorted_neighborhoods))
                 must_link_found = False
                 
                 for neighborhood in sorted_neighborhoods:
@@ -659,9 +647,7 @@ class NPU_old:
                                     break
                                 except EmptyClustersException:
                                     print('Empty cluster')
-                            self.hist_labels[oracle.queries_cnt] = self.clusterer.labels_
-                                # request_nc_idx += 1
-                    
+                            self.hist_labels[oracle.queries_cnt] = self.clusterer.labels_                    
 
                         # TODO should we add the cannot-link in case the algorithm stops before it queries all neighborhoods?
 

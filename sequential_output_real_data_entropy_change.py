@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  1 17:21:07 2020
-
-Run a single replication of simulation.
-Output the ARI of the proposed method w/ and wo penalty and NPU + MPCKmeans, and COBRA
+Run a single replication of simulation. Output the ARI of the proposed method w/ and wo penalty and NPU + MPCKmeans, and COBRA
 
 @author: Yujia Deng
 """

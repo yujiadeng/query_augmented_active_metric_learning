@@ -7,12 +7,31 @@ from scipy.linalg import null_space
 import scipy
 
 class proposed_clusterer:
-    
+    """
+    Proposed semi-supervised clustering method with augmented query metric learning (AQM)
+
+    @author: Yujia Deng
+    """
+        
     def __init__(self, n_clusters=3):
         self.n_clusters = n_clusters
         self.A = None
         
     def fit(self, X, y=None, ml=[], cl=[], diag=True, include_H=True, true_H=False, lambd=1, gamma=0, rank=1, penalize_idx=None, verbose=None):
+        """
+        X: n x p matrix, data matrix
+        y: n vector, label
+        ml: list, similar pair / must-link index set
+        cl: list, dissimilar pair / cannot-link index set
+        diag: bool, whether to train diagonal metric matrix
+        true_H: bool, whether to use the true H (for test purpose)
+        lambd: float, unnormalized MDSP penalty weight
+        gamma: float, unnormalized selective penalty weight
+        rank: int, rank of metric when diag=False
+        penalize_idx: int, index of the features to penalize
+        verbose: bool, control outputs
+        """
+        
         S = {(x1, x2) for (x1, x2) in ml}
         D = {(x1, x2) for (x1, x2) in cl}
         
@@ -47,8 +66,6 @@ class proposed_clusterer:
               
         if diag:
             # penality on the distance to the center
-    
-         
             a = cp.Variable(p)
             a.value = np.repeat(1,p) #initial
             
@@ -62,7 +79,6 @@ class proposed_clusterer:
                       
             M_W_S = np.zeros(p)
             M_W_D = np.zeros(p)
-    #        sum_W_D = 0
             count_S = 0
             count_D = 0
             for i, j in U:
@@ -166,7 +182,6 @@ class proposed_clusterer:
                     M_S += np.outer(X[i] - X[j], X[i] - X[j])
                 
                 M_W_S = np.zeros((p, p))
-        #        sum_W_D = 0
                 e, f, w_D = [], [], []
                 count_S = 0
                 count_D = 0
@@ -181,7 +196,6 @@ class proposed_clusterer:
                         coef_D = max(-coef * K, 0)
                         w_D.append(coef_D)
                     coef_S = max(coef * K/(K-1), 0)
-        #            sum_W_S += (X[i] - X[j])**2 @a * coef_S
                     M_W_S += np.outer(X[i] - X[j], X[i] - X[j]) * coef_S
                     
                 center_mat = np.zeros((p, p))
@@ -201,7 +215,6 @@ class proposed_clusterer:
                 cycle = 1
                 alpha = 0.1  # initial step size along gradient
                         
-                ## swithing grad1 and grad2?
                 grad1 = fS1(C2_S, v) # gradient of similarity constraint function
                 grad2 = fD1(X, c, d, e, f, w_D, v) # gradient of dissimilarity constraint function
                 M = grad_projection(grad1, grad2) # gradient of fD1 orthogonal to fS1
@@ -212,12 +225,9 @@ class proposed_clusterer:
                     for it in range(max_proj):
                         # First constraint: Similar pairs < t
                         norm_mat = mat_sqrt(C2_S/(t+1e-6))
-                        ##
-                        # v = np.linalg.inv(norm_mat).dot(proj2ball(norm_mat.dot(v)))
                         v = proj2ball(np.linalg.inv(norm_mat + 1e-4).dot(v))
                         if prev is not None:
                             v = (np.eye(p) - proj_mat(prev)) @ v
-                        #
                         A = np.outer(v, v)
                         fDC2 = w.dot(A.ravel())
                         error2 = (fDC2 - t) / (t + 1e-6)
@@ -245,20 +255,14 @@ class proposed_clusterer:
                         alpha /= 2
                         grad2 = fS1(C2_S, v)
                         grad1 = fD1(X, c, d, e, f, w_D, v)
-                        # M = grad_projection(grad1, grad2)
                         M = grad1
-                        
-                        # if prev is not None:
-                            # M = (np.eye(p) - proj_mat(prev)) @ M # project to the orthogonal space of the previous directions
-    #                    print('condition fail')
+
                         v[:] = v_old + alpha * M
                     delta = np.linalg.norm(alpha * M) / (np.linalg.norm(v_old) + 1e-6)
                     if delta < convergence_threshold:
                         break
                     if verbose:
                         print('mmc iter: %d, conv = %f, projections = %d' % (cycle, delta, it+1))
-    #                    print(v)
-    #                    print(np.linalg.norm(v))
                 if delta > convergence_threshold:
                   converged = False
                   if verbose:

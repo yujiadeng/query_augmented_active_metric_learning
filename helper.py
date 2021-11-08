@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep  5 21:24:29 2019
+Helper functions
 
 @author: Yujia Deng
 """
@@ -11,8 +11,6 @@ from random import sample
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-#def random_query(N:'total number of samples', K:'number to sample'):
-#    return sample(list(combinations(range(N),2)), K)
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 from active_semi_clustering.semi_supervised.pairwise_constraints import PCKMeans, MPCKMeans, MPCKMeansMF, COPKMeans
@@ -204,8 +202,6 @@ def ARI_clustering(X, y, C, method='kmeans', S=None, D=None):
     elif method.lower() == 'mpckmeans':
         model = MPCKMeans(n_clusters=C)
         model.fit(X, ml=list(S), cl=list(D))      
-#        print('Diagonal entries from MPCKmeans')
-#        print(np.diag(model.A))
     return adjusted_rand_score(y, model.labels_)
 
 def add_query(y, S, D, U, n_pair, query_rule='random', pairs=None):
@@ -276,7 +272,6 @@ def plot3D(X,Y):
 
 def mat_normalize(A):
     w, v = np.linalg.eig(A)
-#    w = [0 if x < 1e-4 for x in w]
     tmp = np.diag(1/np.sqrt(w))
     return(np.dot(np.dot(tmp, A),tmp))     
     
@@ -428,10 +423,6 @@ def load_high_dim4(P1, P2, N, mu=5, seed=1,random_scale=False, rotate=False):
     N: number of instances per cluster
     """
     rng = np.random.RandomState(seed)
-    # N1 = int(P1*N)
-    # a = np.lcm(P1, P2)
-    # N1 = int(a/P1*N)
-    # N2 = int(a/P2*N)
     N1 = N
     N2 = ceil(N1*P1/P2)
     num_class = P1
@@ -454,9 +445,6 @@ def load_high_dim4(P1, P2, N, mu=5, seed=1,random_scale=False, rotate=False):
 def load_mix(P1, P2, N, mu=5, seed=1, rho:'mixing rate'=0.5):
     X, y, num_class, num_per_class, scale = load_high_dim4(P1, P2, N, mu, seed, random_scale=False, rotate=False)
     # mix the true feature and the noisy features
-#    A = np.eye(P1 + P2)
-#    for k in range(0, 2):
-#        A[k, k + P1] = A[k + P1, k] = rho
     tmp = np.random.randn(P1+P2, P1+P2)
     A = tmp.dot(tmp.T)
     X = transform(X, A)

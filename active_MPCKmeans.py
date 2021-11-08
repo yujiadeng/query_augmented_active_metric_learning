@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 25 17:17:52 2019
+Helper function to run MPCKmeans
 
 @author: Yujia Deng
 """
@@ -11,7 +11,6 @@ def find_uncertain_pairs(y_fit, X, A, D, S, U, K, nc):
     recordl = dict()
     for i, j in U:
         tmp = np.inner(np.inner(X[i,:]-X[j,:], A), X[i,:]-X[j,:])
-#        tmp2 = np.inner(H[i,:], H[j,:])
         if y_fit[i] == y_fit[j]:
             recordu[(i,j)] = tmp
         else:
@@ -25,13 +24,11 @@ def find_uncertain_pairs(y_fit, X, A, D, S, U, K, nc):
     else:
         idx = np.argsort(-np.array(list(recordu.values())))
         setu = [list(recordu.keys())[idx[k]] for k in range(Ku)]
-#        print([list(recordu.values())[idx[k]] for k in range(Ku)])
     if len(recordl) <= Kl:
         setl = set(recordl.keys())
     else:
         idx = np.argsort(np.array(list(recordl.values())))
         setl = [list(recordl.keys())[idx[k]] for k in range(Kl)]
-#        print([list(recordl.values())[idx[k]] for k in range(Ku)])
     return set(setu) | set(setl)
 
     

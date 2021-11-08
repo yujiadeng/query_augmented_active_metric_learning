@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Compare the feature weights learned by the proposed method and the MPCKmeans. Generate Figure 4 based on the pre-run results on urban land cover dataset.
+Compare the feature weights learned by the proposed method and the MPCKmeans. Generate Figure 4 based on the pre-run results on urban land cover dataset
+
+@author: Yujia Deng
 """
 
 import numpy as np

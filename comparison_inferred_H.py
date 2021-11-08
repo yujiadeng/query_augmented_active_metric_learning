@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 23 15:32:11 2019
+Compare the ARI w/ and w/o query augmentation. Generate Figure 1 and Figure 2
 
 @author: Yujia Deng
-
-check if including the 
 """
 from Step2_Metric_learn import *
 from Step1_Impute import infer_membership_from_label
@@ -25,9 +23,6 @@ def metric_learn_A_diag(X, S, D, H, include_H=True, diag=True):
     
     a = cp.Variable(p)
     a.value = np.repeat(1,p) #initial
-#    sum_S = sum(np.inner((X[i,:]-X[j,:])*a, (X[i,:]-X[j,:])) for (i, j) in S)
-#    sum_D = sum(np.inner((X[i,:]-X[j,:])*a, (X[i,:]-X[j,:])) for (i, j) in D)
-#    objective = cp.Minimize(sum_S-cp.log(sum_D))
     sum_S = 0
     for (i, j) in S:
         sum_S += (X[i]-X[j])**2 @a
@@ -56,9 +51,6 @@ def metric_learn_A(X:'N by p data matrix', S:'similar set', D:'dissimilar set', 
     if diag:
         a = cp.Variable(p)
         a.value = np.repeat(1,p) #initial
-    #    sum_S = sum(np.inner((X[i,:]-X[j,:])*a, (X[i,:]-X[j,:])) for (i, j) in S)
-    #    sum_D = sum(np.inner((X[i,:]-X[j,:])*a, (X[i,:]-X[j,:])) for (i, j) in D)
-    #    objective = cp.Minimize(sum_S-cp.log(sum_D))
         sum_S = 0
         for (i, j) in S:
             sum_S += (X[i]-X[j])**2 @a
@@ -75,48 +67,7 @@ def metric_learn_A(X:'N by p data matrix', S:'similar set', D:'dissimilar set', 
         return np.diag(a.value/np.linalg.norm(a.value))
     else:
         pass
-    
-#    with Model("metric_learn") as M:      
-#        
-#        if diag:
-#            a = M.variable('a', p, Domain.greaterThan(0.0))
-#            if include_H:    
-#                M.objective(ObjectiveSense.Minimize,Expr.add( Expr.add(Expr.dot(np.diag(M_W),a), Expr.dot(np.diag(M_S),a))), Expr.neg())
-#            else:
-#                M.objective(ObjectiveSense.Minimize, Expr.dot(np.diag(M_S),a))
-#            # constraint
-#            M.constraint(Expr.dot(np.diag(M_D),a), Domain.greaterThan(1.0))
-#            if include_H:    
-#                M.objective(ObjectiveSense.Minimize, Expr.add(Expr.dot(np.diag(M_W),a), Expr.dot(np.diag(M_S),a)))
-#            else:
-#                M.objective(ObjectiveSense.Minimize, Expr.dot(np.diag(M_S),a))
-#            # constraint
-#            M.constraint(Expr.dot(np.diag(M_D),a), Domain.greaterThan(1.0))
-#            M.solve()
-#            return np.diag(a.level())
-##            
-##            
-##            A = M.variable(Domain.inPSDCone(p))
-##            M.constraint(A.pick([[i,j] for i in range(p) for j in range(i+1,p)]), Domain.equalsTo(0.0))
-##            M.constraint(A.pick([[j,i] for i in range(p) for j in range(i+1,p)]), Domain.equalsTo(0.0))
-##            if include_H:
-###                M.objective(ObjectiveSense.Minimize, (Expr.add(Expr.dot(M_W/N/N, A), Expr.dot(M_S/len(S), A))))
-##                M.objective(ObjectiveSense.Minimize, (Expr.add(Expr.dot(M_W, A), Expr.dot(M_S, A))))
-##            else:
-###                M.objective(ObjectiveSense.Minimize, (Expr.dot(M_S/len(S), A)))
-##                 M.objective(ObjectiveSense.Minimize, (Expr.dot(M_S, A)))
-##            M.constraint(Expr.dot(M_D, A), Domain.greaterThan(1.0))
-#        else:
-#        ## reverse Eric Xing's find the most noisy dimension
-#            A = M.variable(Domain.inPSDCone(p))
-#            if include_H:
-#                M.objective(ObjectiveSense.Maximize, (Expr.add(Expr.dot(M_W/N/N, A), Expr.dot(M_S/len(S), A))))
-#            else:
-#                M.objective(ObjectiveSense.Maximize, (Expr.dot(M_S/len(S), A)))
-#            M.constraint( Expr.dot(M_D/len(D), A), Domain.lessThan(1.0))
-#            M.solve()
-#            return np.array(A.level()).reshape((p,p))
-
+   
 def metric_learn_backward(P2:"number of noisy dimensions", X0, S, D, H, include_H = True, diag=True):
     """
     sequentially exclude the most noisy dimensions
@@ -155,7 +106,6 @@ def ratio_S_D(X, S, D):
 if __name__ == '__main__':
     np.random.seed(1)   
     reps = 30
-#    num_constraints = range(20, 200, 10)
     num_constraints = range(10, 110, 10)
     result_ARI_H = np.zeros((reps, len(num_constraints)))
     result_ARI_without_H = np.zeros((reps, len(num_constraints)))
@@ -179,10 +129,7 @@ if __name__ == '__main__':
                 D = set()
                 S, D, U = add_query(y, S, D, U, nc)
             
-            ## true membership
-#            H = np.zeros((N, K))
-#            for n in range(N):
-#                H[n, y[n]] = 1
+
             ## inferred from step 1
             H = infer_membership_from_label(S, D, N, K)
             

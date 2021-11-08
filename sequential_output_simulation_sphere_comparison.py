@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Run a single replication of simulation with sphere settings.
-Output the ARI of the proposed method w/ and wo penalty and NPU + PCKmeans, COPKmeans
+
+PCKmeans + NPU
+COPKmeans + NPU
 
 @author: Yujia Deng
 """

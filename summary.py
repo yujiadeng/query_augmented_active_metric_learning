@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr  3 00:33:40 2020
+Helper function for result table output
 
 @author: Yujia Deng
 """

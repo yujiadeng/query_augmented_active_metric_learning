@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  1 17:21:07 2020
-
-Run a single replication of simulation.
+Run a single replication of simulation
 
 PCKmeans + NPU
 COPkmeans + NPU

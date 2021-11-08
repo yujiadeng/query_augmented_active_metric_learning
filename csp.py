@@ -70,43 +70,6 @@ class CSP:
         min_v = vec_norm[:,ids[min_idx]]
 
         U = D_norm.dot(min_v)
-
-        #####
-        # _, lam, _ = svd(Q)
-        # # beta = 0.6 * lam[K]
-        # beta = (lam[K] + lam[K-1]) / 2 - 1e-6
-
-        # Q1 = Q - beta * np.eye(N)
-        # val, vec = sp.linalg.eig(L_norm, Q1)
-        # # w, vec = eig(inv(Q1).dot(L))
-
-        # for i in range(N):
-        #     vec[:, i] = vec[:, i] / norm(vec[:, i])
-
-        # # find feasible cuts
-        # satisf = np.diag(vec.T.dot(Q1).dot(vec))
-        # I_ = np.where(satisf >= 0)[0]
-        
-        # cost = np.diag(vec[:, I_].T.dot(L).dot(vec[:, I_]))
-        # ind = sorted(range(len(cost)), key=lambda i: cost[i])
-
-        # # remove trivial cuts
-        # i = 0
-        # while True:
-        #     if self.nnz(vec[:, I_[ind[i]]] > 0) != 0 and self.nnz(vec[:, I_[ind[i]]] < 0) != 0 :
-        #         break
-        #     i += 1
-        # ind = ind[i:]
-
-
-        # # output cluster indicators
-        # ind = ind[:min(len(ind), K-1)]
-        # cost = cost[ind]
-        # U = vec[:, I_[ind]]
-        # for i in range(U.shape[1]):
-        #     U[:, i] = D_norm.dot(U[:, i]).dot(np.sqrt(vol))
-        # U = np.real(U)
-        ####
         U = np.real(U)
         while True:
             try:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  1 13:19:58 2020
+Helper function to output ARI of different active clustering methods
 
 @author: Yujia Deng
 """

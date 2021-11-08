@@ -142,9 +142,6 @@ for rep in range(reps):
     result3 = np.load(os.path.join(save_path_proposed, ('rep%d.npz' % (rep+1))), allow_pickle=True)
     res_proposed[rep, :] = list(result3['result_proposed_penalty'].item().values())
 
-    # result1 = np.load(os.path.join(save_path_comparison, ('rep%d.npz' % (rep+1))), allow_pickle=True)
-    # res_propNPU[rep, :] = list(result1['result_proposed_penalty'].item().values())
-
     result2 = np.load(os.path.join(save_path_comparison, ('rep%d.npz' % (rep+1))), allow_pickle=True)
     res_PCKmeans[rep, :] = list(result2['result_PCKmeans'].item().values())
     res_COPKmeans[rep, :] = list(result2['result_COPKmeans'].item().values())
@@ -161,12 +158,10 @@ mean_MPCKmeans = np.mean(res_MPCKmeans, 0)
 mean_proposed = np.mean(res_proposed, 0)
 mean_PCKmeans = np.mean(res_PCKmeans, 0)
 mean_COPKmeans = np.mean(res_COPKmeans, 0)
-# mean_propNPU = np.mean(res_propNPU, 0)
 mean_COBRAS = np.mean(res_COBRAS, 0)
 
 plt.figure(figsize=(8, 6))
 plt.plot(request_nc, mean_proposed, color='r', label='AQM_MEE', linewidth=2)
-# plt.plot(request_nc, mean_propNPU, color='r', label='AQM+NPU', linewidth=1, linestyle='--')
 plt.plot(request_nc, mean_MPCKmeans, color='b', label='MPCKmeans', linewidth=1)
 plt.plot(request_nc, mean_COPKmeans, color='g', label='COPKmeans', linewidth=1)
 plt.plot(request_nc, mean_PCKmeans, color='cyan', label='PCKmeans', linewidth=1)

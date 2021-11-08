@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  7 16:07:08 2019
-
 Compare the performance of active_query, random_query and MPCKmeans parallely
 
 @author: Yujia Deng
@@ -138,7 +136,6 @@ def comparison_high_dim(nc, rep, P1, P2, nc_per_step, true_H=False):
             X_proj = X.dot(mat_sqrt(A_active))
             ARI_active_PCKmeans = ARI_clustering(X_proj, y, K, 'PCKmeans', S_active, D_active)
             t11 = time.time()
-#                ARI_active_PCKmeans = 0
             break
         except EmptyClustersException:
             print('Clustering Error')
@@ -160,7 +157,7 @@ def comparison_high_dim(nc, rep, P1, P2, nc_per_step, true_H=False):
             break
         except EmptyClustersException:
             print('Clustering Error')
-     # MPCKmeans with single diagonal metric matrix
+    # MPCKmeans with single diagonal metric matrix
     while True:
         try:
             t30 = time.time()
@@ -182,7 +179,6 @@ def comparison_high_dim(nc, rep, P1, P2, nc_per_step, true_H=False):
             t40 = time.time()
             ARI_MPCKmeansMF = ARI_clustering(X, y, K, 'MPCKmeansMF', S_random, D_random)
             t41 = time.time()
-#                ARI_MPCKmeansMF = 0 
             break
         except EmptyClustersException:
             print('Clustering Error')    
@@ -239,12 +235,7 @@ if __name__ == '__main__':
                 result_ARI_MPCKmeans_MinMax[rep, idx] = ARI_MPCKmeans_MinMax
                 result_ARI_MPCKmeans_NPU[rep, idx] = ARI_MPCKmeans_NPU
     else:
-#        for idx, nc in enumerate(n_super_instances):
-#            for rep in range(reps):
-#                n_query, ARI = repeat_COBRA(nc, rep, P1, P2)
-#                result_COBRA[rep][idx] = (n_query, ARI)
 
-# some issue on the random seed here
         idx_set_COBRA = [(i,j) for i in n_super_instances for j in range(reps)]
         result_C =  Parallel(n_jobs=4, verbose=10)(delayed(repeat_COBRA)(nc, rep, P1, P2) for nc, rep in idx_set_COBRA)
         ns_idx = dict()
@@ -253,18 +244,14 @@ if __name__ == '__main__':
         for d1, d2 in enumerate(idx_set_COBRA):
             ns, rep = d2
             idx = ns_idx[ns]
-#            print(rep, idx, result_C[d1])
             result_COBRA[rep][idx] = result_C[d1]
-#            print(result_COBRA)
             
         save_path = './active_vs_random/infer_S_D_from_H_fuzzy_learn_A_simulation_diag/10_per_cluster/mu_5/P1_'+str(P1)+'P2_'+str(P2)+'/incremental_'+str(nc_per_step)
-#        save_path = './active_vs_random/infer_S_D_from_H_fuzzy_learn_A_simulation_diag/10_per_cluster/mu_5/P1_'+str(P1)+'P2_'+str(P2)+'/incremental_'+str(nc_per_step)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
             
         np.save(os.path.join(save_path, 'result_COBRA.npy'), result_COBRA)
         idx_set = [(i,j) for i in num_constraints for j in range(reps)]
-    #    with parallel_backend('multiprocessing'):
         
         n_query = np.array([[ result_COBRA[j][i][0] for i in range(len(n_super_instances))] for j in range(reps)])
         ARI_COBRA = np.array([[ result_COBRA[j][i][1] for i in range(len(n_super_instances))] for j in range(reps)])

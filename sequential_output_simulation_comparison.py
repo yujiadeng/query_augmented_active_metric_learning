@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  1 17:21:07 2020
-
-Run a single replication of simulation.
-simulation with two comparing methods
+Run a single replication of simulation with two competing methods
 
 PCKmeans + NPU
 COPkmeans + NPU
@@ -18,6 +15,14 @@ import errno
 
 sys.argv = ['', 5, 30, 3, 60, 10, 0]
 #############
+"""
+P1: int, true feature number (equal to cluster number)
+P2: int, irrelevant feature number
+mu: float, distance between the cluter center to the origin
+N_per_cluster: int, number of points per cluster
+max_nc: int, maximum number of constraints
+rep: int, replicaiton index
+"""
 _, P1, P2, mu, N_per_cluster, max_nc, rep = sys.argv
 #############
 

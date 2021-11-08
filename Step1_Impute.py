@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep  5 17:25:14 2019
-
-@author: Yujia Deng
-
 Step 1. Impute membership H given the label set with multidirectional penalty
 
 H_hat = argmin sum_{y_{ij}\neq 0} (y_{ij}-H_i^TH_j)^2+\lambda sum_{i,k} min(|H_{ik}|, |H_{ik}-1|)
@@ -11,39 +7,23 @@ H_hat = argmin sum_{y_{ij}\neq 0} (y_{ij}-H_i^TH_j)^2+\lambda sum_{i,k} min(|H_{
 s.t. 
 1^T H_i = 1
 H_{i,k} \geq 0
+
+@author: Yujia Deng
 """
 import numpy as np
 from numpy.linalg import inv
 from helper import *
 from mosek.fusion import *
-# import cvxpy as cp
 
 def soft_threshold(lambd, y):
     return(np.sign(y)*np.max((np.abs(y)-lambd,0)))
     
 def infer_membership_from_label(S:'similar set', D:'dissimilar set', N:'number of samples', K:'number of clusters', lambd: 'multidirectional penalty weight'=1, rho:'multiplier weight'=10, eps=1e-3,inspect=False) -> "N by K array":
-#    H = cp.Variable((N, K))
-#    sum_SD = 0
-#    for (i, j) in S:
-#        sum_SD += (1 - H[i,:]@ H[j,:])**2
-#    for (i, j) in D:
-#        sum_SD += (H[i,:] @ H[j,:])**2
-#    objective = cp.Minimize(sum_SD)
-#    constraints = [0 <= H, H @ np.repeat(1,K)==np.repeat(1,N)]
-#    prob = cp.Problem(objective, constraints)
-#    prob.solve(verbose=True, gp=True)
-#    return H.value
-#    
-    # Initialization
-#    H = np.repeat(1/K, N*K).reshape((N, K))
     nc = len(S) + len(D)
     inits = 5
     L_past = np.infty
     for init in range(inits): # try different initiations to avoid loacal extrema
         H = np.random.randn(N,K)
-    #    H = np.zeros((N,K))
-    #    for k in range(K):
-    #        H[int(np.random.choice(range(K),1))] = 1
         Z = H.copy()
         v = np.repeat(0.0, N*K).reshape((N, K))
         w = np.repeat(0.0, N)
@@ -81,7 +61,6 @@ def infer_membership_from_label(S:'similar set', D:'dissimilar set', N:'number o
         
         L0 = loss(sets_j, H, Z, u, v, w, lambd, rho)
         for iter in range(iters):
-#            print(loss(sets_j, H, Z, u, v, w, lambd, rho))
             # Step 1: update membership matrix H (row by row)
             reps = 20
             H_hat = H.copy()
@@ -103,26 +82,10 @@ def infer_membership_from_label(S:'similar set', D:'dissimilar set', N:'number o
                 rel_rate_1 = abs(L-L1)/L1
                 L1 = L
                 if rel_rate_1 < eps:
-#                    print('rel_rate_1=%2.3f' % rel_rate_1)
                     break
-#            print('rep=%d, rel_rate_1=%2.3f' %(rep,rel_rate_1))
             H = H_hat.copy()                   
             # Step 2: update augmented matrix Z
             for i in range(N):
-    #            if i<10:
-    #                Z[i,0] = soft_threshold(lambd/rho, v[i,0]/rho + H[i,0] -1) + 1
-    #                Z[i,1] = soft_threshold(lambd/rho, v[i,1]/rho + H[i,1]) 
-    #                Z[i,2] = soft_threshold(lambd/rho, v[i,2]/rho + H[i,2]) 
-    #            elif i<20:
-    #                Z[i,1] = soft_threshold(lambd/rho, v[i,1]/rho + H[i,1] -1) + 1
-    #                Z[i,0] = soft_threshold(lambd/rho, v[i,0]/rho + H[i,0]) 
-    #                Z[i,2] = soft_threshold(lambd/rho, v[i,2]/rho + H[i,2])
-    #            else:
-    #                Z[i,2] = soft_threshold(lambd/rho, v[i,1]/rho + H[i,2] -1) + 1
-    #                Z[i,0] = soft_threshold(lambd/rho, v[i,0]/rho + H[i,0]) 
-    #                Z[i,1] = soft_threshold(lambd/rho, v[i,1]/rho + H[i,1])
-#                Z_i_tilde = H[i,:] + v[i,:]/rho
-#                Z[i,:] = [soft_threshold(lambd/rho, v[i,k]/rho + H[i,k]) if Z_i_tilde[k] < 1/2 else soft_threshold(lambd/rho, v[i,k]/rho + H[i,k] -1) + 1 for k in range(K)]
                 
                 Z[i,:] = H[i,:] + v[i,:]/rho
             # Step 3: udpate Lagrange multiplier u,v,w
@@ -137,8 +100,7 @@ def infer_membership_from_label(S:'similar set', D:'dissimilar set', N:'number o
         if L < L_past:
             ans = H.copy(), Z.copy(), L.copy(), v.copy(), w.copy(), u.copy()
             L_past = L
-#            H_ans = H       
-#        print('init=%d, L=%2.3f, rel_rate=%2.3f, L_past=%2.3f' % (init, L, rel_rate, L_past))
+
     if inspect:
         return ans
     else:
@@ -147,7 +109,6 @@ def infer_membership_from_label(S:'similar set', D:'dissimilar set', N:'number o
 from itertools import combinations
 from random import sample
 from helper import *
-# import matplotlib.pyplot as plt
 from sklearn.metrics import adjusted_rand_score
 
 def test_case1():
@@ -185,7 +146,6 @@ def test_case2():
                 D = set()
                 S, D, U = add_query(y, S, D, U, nc)
             H, Z, L, v, w, u = infer_membership_from_label(S, D, N, K, lambd=1, inspect=True) 
-#            H = infer_membership_from_label(S, D, N, K, lambd=1, ins) 
             H = np.array([0 if x< 1e-3 else 1 if x>1 else x for x in H.flat]).reshape(H.shape)
             y_hat = np.argmax(H,1)# estimated label
             result_loss[rep, idx] = L
